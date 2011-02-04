@@ -1,14 +1,16 @@
 <?php
 /**
- * TODO:
- * Add count per site, when we found it again increase the number
- * Create run script that forks the spider
- * Split in multiple files
+ * TX-Spider
+ *
+ * @category   Spider
+ * @package    Src
+ * @copyright  Copyright (c) 2011 Tim de Pater
+ * @license    http://www.gnu.org/licenses/gpl.txt GPLv3 License
+ * @version    $Id:$
  */
-
 class SiteSpider
 {
-    const LOGPATH = 'logs/logs';
+    const LOGPATH = 'logs/spider.log';
 
     protected $_db;
     protected $_lastUrl;
@@ -36,12 +38,14 @@ class SiteSpider
 	{
         $urls = SitesBase::getToBeParsed();
 
+        // @todo: Use iterator
         foreach ($urls as $website)
         {
+            $website = $website->value;
             $parseTime = microtime(true);
-            $this->_log(sprintf('Parsing "%s" (%u)', $website['url'], $website['hops']));
+            $this->_log(sprintf('Parsing "%s" (id: %s, hop: %u)', $website->url, $website->_id, $website->hops));
 
-    		$data = $this->_getData($website['url']);
+    		$data = $this->_getData($website->url);
     		$urls = array();
 
     		if (null !== $data['content'])
@@ -50,12 +54,12 @@ class SiteSpider
     			foreach ($urls as $url)
     			{
     			    SitesBase::addSite(
-            		    $url, ($website['hops']+1), $website['id']
+            		    $url, ($website->hops+1), $website->_id
             		);
     			}
     		}
     		SitesBase::addMetadata(
-    		    $website['id'], $data['code'], round((microtime(true) - $parseTime), 4), count($urls), 0
+    		    $website->_id, $data['code'], round((microtime(true) - $parseTime), 4), count($urls), 0
     		);
         }
         $this->_parse();

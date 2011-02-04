@@ -1,4 +1,13 @@
 <?php
+/**
+ * TX-Spider
+ *
+ * @category   Spider
+ * @package    Src
+ * @copyright  Copyright (c) 2011 Tim de Pater
+ * @license    http://www.gnu.org/licenses/gpl.txt GPLv3 License
+ * @version    $Id:$
+ */
 class SitesBase
 {
     const DATABASE = 'db/websites.db';
