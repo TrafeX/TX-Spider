@@ -3,10 +3,9 @@ Idea
 A experimental spider to search for websites starting from a specific site.
 Connect it to public API's to get nice statistics about websites.
 
-
 Todo
 ====
-	[ ] Add count per site, when we found it again increase the number
+	[X] Add count per site, when we found it again increase the number
 	[ ] Create run script that forks the spider
 	[ ] Connect to API's to get cool statistics
 	[ ] Get real HTTP code
@@ -15,3 +14,5 @@ Todo
 	[X] Use a noSQL Database
 	[ ] Use Zend_Http_Client for parsing
 	[ ] Optimize noSQL usage
+	[ ] Create couchDb views for reports
+	[ ] Add adddate

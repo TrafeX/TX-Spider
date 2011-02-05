@@ -12,12 +12,11 @@ class SiteSpider
 {
     const LOGPATH = 'logs/spider.log';
 
-    protected $_db;
     protected $_lastUrl;
 
     public function __construct()
     {
-        $this->_db = SitesBase::connect();
+        SitesBase::connect();
     }
 
     public function run()
@@ -59,7 +58,7 @@ class SiteSpider
     			}
     		}
     		SitesBase::addMetadata(
-    		    $website->_id, $data['code'], round((microtime(true) - $parseTime), 4), count($urls), 0
+    		    $website->_id, $data['code'], round((microtime(true) - $parseTime), 4), count($urls)
     		);
         }
         $this->_parse();
