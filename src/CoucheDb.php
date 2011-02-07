@@ -56,11 +56,10 @@ class SitesBase
 
     public static function setup()
     {
-        // @todo: Generate the nessecary views and db
+        // @todo: Call this once for setup
         $stats = <<<STATISTICS
 {
    "_id": "_design/statistics",
-   "_rev": "2-1ff85df53f175d3dcd487e36c2f691d2",
    "language": "javascript",
    "views": {
        "nrprocessed": {
@@ -77,7 +76,6 @@ STATISTICS;
     $spider = <<<SPIDER
 {
    "_id": "_design/spider",
-   "_rev": "7-2da02e2324d5dd565e9a71b0ef03d131",
    "language": "javascript",
    "views": {
        "byurl": {
@@ -89,6 +87,19 @@ STATISTICS;
    }
 }
 SPIDER;
+
+    $http = new Zend_Http_Client(self::DATABASE . '/');
+    $http->setRawData($stats);
+    $http->setEncType('application/json');
+    $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+
+    $http = new Zend_Http_Client(self::DATABASE . '/');
+    $http->setRawData($spider);
+    $http->setEncType('application/json');
+    $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+
+    return true;
+
     }
 
     public static function deleteAll()

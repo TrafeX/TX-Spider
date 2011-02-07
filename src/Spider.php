@@ -8,6 +8,8 @@
  * @license    http://www.gnu.org/licenses/gpl.txt GPLv3 License
  * @version    $Id:$
  */
+require_once 'Zend/Http/Client.php';
+
 class SiteSpider
 {
     const LOGPATH = 'logs/spider.log';
@@ -61,58 +63,44 @@ class SiteSpider
     		    $website->_id, $data['code'], round((microtime(true) - $parseTime), 4), count($urls)
     		);
         }
+        $this->_log(sprintf('Memory usage: %.2fMB', memory_get_usage(true)/1024/1024));
         $this->_parse();
 	}
 
-    protected function _getLast()
-    {
-        $last = SitesBase::getLast();
-        if (!isset($last['url']))
-        {
-            $last['url'] = 'http://www.enrise.com';
-            $last['hops'] = 0;
-            $last['parent'] = 0;
-        }
-        $this->_lastUrl = $last['url'];
-        return $last;
-    }
-
     protected function _getData($url)
 	{
-	    $data = array('code' => 000, 'content' => null);
+	    $data = array('code' => 404, 'content' => null);
 
-		$opts = array (
-		  'http'=> array (
-			'method' => "GET",
-			'user_agent' => "TX-Spider",
-			'max_redirects' => 5,
-			'timeout' => 5,
-			'header' => "Accept-language: en\r\n" .
-						"Cookie: foo=bar\r\n"
-		  	)
+		$config = array (
+			'useragent' => "TX-Spider",
+			'maxredirects' => 5,
+			'timeout' => 5
 		);
 
-		$context = stream_context_create($opts);
-		$stream = fopen($url, "r", false, $context);
-		if(!$stream)
+		$client = new Zend_Http_Client($url, $config);
+		try {
+		    $request = $client->request();
+		    $data['code'] = $request->getStatus();
+		}
+		catch (Zend_Http_Client_Adapter_Exception $e)
 		{
-		    $data['code'] = 404;
-		    $this->_log(sprintf('Failed opening "%s"', $url));
+		    $this->_log(sprintf('Failed opening "%s" (code: %u)', $url, $data['code']));
 		    return $data;
 		}
-        $content = stream_get_contents($stream);
+		if(!$request->isSuccessful())
+		{
+		    $this->_log(sprintf('Failed opening "%s" (code: %u)', $url, $data['code']));
+		    return $data;
+		}
+        $content = $request->getBody();
 		if($content && strlen($content) > 0)
 		{
-		    fclose($stream);
-		    $data['code'] = 200;
-			$data['content'] = $content;
+		    $data['content'] = $content;
 		}
 		else
 		{
-		    $data['code'] = 503;
-			$this->_log(sprintf('Failed reading content from url "%s"', $url));
+		    $this->_log(sprintf('Failed reading content from url "%s" (code: %u)', $url, $data['code']));
 		}
-		@fclose($stream);
 		return $data;
 	}
 
