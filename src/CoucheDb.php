@@ -1,20 +1,32 @@
 <?php
 /**
- * TX-Spider
+ * TrafexCrawler
  *
  * @category   Spider
  * @package    Src
- * @copyright  Copyright (c) 2011 Tim de Pater
- * @license    http://www.gnu.org/licenses/gpl.txt GPLv3 License
+ * @copyright  Copyright (c) 2011 Tim de Pater <code@trafex.nl>
+ * @license    GPLv3 License http://www.gnu.org/licenses/gpl.txt
  * @version    $Id:$
  */
-date_default_timezone_set('Europe/Amsterdam');
-require_once 'Zend/Http/Client.php';
 
+/**
+ * The database for the sites covered by CouchDB
+ *
+ */
 class SitesBase
 {
+    /**
+     * CoucheDB host, port and database
+     *
+     * @var string
+     */
     const DATABASE = 'http://localhost:5984/spiderdb';
 
+    /**#@+
+     * Fields in the couchDB
+     *
+     * @var string
+     */
     const KEY_URL = 'url';
     const KEY_HOPS = 'hops';
     const KEY_PARENT = 'parent';
@@ -24,36 +36,14 @@ class SitesBase
     const KEY_NRFOUND = 'nrfound';
     const KEY_STATUS = 'status';
     const KEY_ADDDATE = 'adddate';
-
     const KEY_REV = '_rev';
+    /**#@-*/
 
-    protected static $_db;
-
-    public static function test()
-    {
-        $data = array('keys' => array('https://www.wacapps.net'));
-        $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/byurl');
-        $http->setRawData(json_encode($data));
-        $http->setEncType('application/json');
-        $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
-        var_dump($data);
-
-        return true;
-
-        $data = array('foo' => 'bar1', '_rev' => '4-831e70e51908b81eedd7458b6684e9a7');
-
-        $http = new Zend_Http_Client(self::DATABASE . '/mydoc5');
-        //$http->setMethod(Zend_Http_Client::PUT);
-        $http->setRawData(json_encode($data));
-        $http->setEncType('multipart/form-data');
-        $result = $http->request(Zend_Http_Client::PUT);
-        var_dump($result); die;
-        if (isset($result->ok, $result->id))
-        {
-             var_dump($result);
-        }
-    }
-
+    /**
+     * Setup the database once
+     *
+     * @return void
+     */
     public static function setup()
     {
         // @todo: Call this once for setup
@@ -73,7 +63,7 @@ class SitesBase
 }
 STATISTICS;
 
-    $spider = <<<SPIDER
+        $spider = <<<SPIDER
 {
    "_id": "_design/spider",
    "language": "javascript",
@@ -88,49 +78,53 @@ STATISTICS;
 }
 SPIDER;
 
-    $http = new Zend_Http_Client(self::DATABASE . '/');
-    $http->setRawData($stats);
-    $http->setEncType('application/json');
-    $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+        // @todo: Batch?
+        $http = new Zend_Http_Client(self::DATABASE . '/');
+        $http->setRawData($stats);
+        $http->setEncType('application/json');
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
 
-    $http = new Zend_Http_Client(self::DATABASE . '/');
-    $http->setRawData($spider);
-    $http->setEncType('application/json');
-    $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+        $http = new Zend_Http_Client(self::DATABASE . '/');
+        $http->setRawData($spider);
+        $http->setEncType('application/json');
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
 
-    return true;
+        return true;
 
     }
 
+    /**
+     * Delete all records thus clearing the database
+     *
+     * @return void
+     */
     public static function deleteAll()
     {
-        // @todo: Implement this
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/byurl');
-        $data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
-        if (isset($data->rows))
-        {
-            foreach($data->rows as $row)
-            {
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        if (isset($data->rows)) {
+            foreach($data->rows as $row) {
                 $rowInfo = $row->value;
                 $http = new Zend_Http_Client(self::DATABASE . '/' . $row->id . '?rev=' . $rowInfo->_rev);
-                $resp = json_decode($http->request(Zend_Http_Client::DELETE)->getBody());
+                $resp = Zend_Json::decode($http->request(Zend_Http_Client::DELETE)->getBody());
             }
             echo 'Deleted ' . $data->total_rows . ' rows' . PHP_EOL;
         }
     }
 
-    public static function connect()
-    {
-        return true;
-    }
-
+    /**
+     * Check if url exists, if so; increase the nrfound
+     *
+     * @param string $url
+     * @return bool|string
+     */
     public static function alreadyExists($url)
     {
         $data = array('keys' => array($url));
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/byurl?limit=1');
-        $http->setRawData(json_encode($data));
+        $http->setRawData(Zend_Json::encode($data));
         $http->setEncType('application/json');
-        $data = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
         $data = new ArrayObject($data->rows);
 
         if ($data->count() > 0) {
@@ -142,19 +136,28 @@ SPIDER;
             $row->value->nrfound++;
 
             $http = new Zend_Http_Client(self::DATABASE . '/' . $row->id);
-            $http->setRawData(json_encode($row->value));
-            $result = json_decode($http->request(Zend_Http_Client::PUT)->getBody());
+            $http->setRawData(Zend_Json::encode($row->value));
+            $http->request(Zend_Http_Client::PUT);
 
-            return $row->id;
+            $id = $row->id;
+            unset($http, $data, $row);
+            return $id;
         }
         return false;
     }
 
+    /**
+     * Create site
+     *
+     * @param string $url
+     * @param int $hops
+     * @param string $parentId
+     * @return string
+     */
     public static function addSite($url, $hops, $parentId)
     {
         $exists = self::alreadyExists($url);
-        if (false !== $exists)
-        {
+        if (false !== $exists) {
             return $exists;
         }
         $data = array(
@@ -166,22 +169,30 @@ SPIDER;
             );
 
         $http = new Zend_Http_Client(self::DATABASE . '/');
-        $http->setRawData(json_encode($data));
+        $http->setRawData(Zend_Json::encode($data));
         $http->setEncType('application/json');
-        $result = json_decode($http->request(Zend_Http_Client::POST)->getBody());
+        $result = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
         if (isset($result->ok, $result->id)) {
              return $result->id;
         }
     }
 
+    /**
+     * Add metadata to existing site
+     *
+     * @param string $id
+     * @param int $httpCode
+     * @param float $parseTime
+     * @param int $nrlinks
+     * @return string
+     */
     public static function addMetadata($id, $httpCode, $parseTime, $nrlinks)
     {
         $http = new Zend_Http_Client(self::DATABASE . '/' . $id);
-        $data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
 
         $nrfound = 0;
-        if (isset($data->nrfound) && $data->nrfound > 0)
-        {
+        if (isset($data->nrfound) && $data->nrfound > 0) {
             $nrfound = $data->nrfound;
         }
         $data = array(
@@ -197,27 +208,31 @@ SPIDER;
             self::KEY_STATUS => 1
             );
         $http = new Zend_Http_Client(self::DATABASE . '/' . $id);
-        $http->setRawData(json_encode($data));
-        $result = json_decode($http->request(Zend_Http_Client::PUT)->getBody());
-        if (isset($result->ok, $result->rev))
-        {
+        $http->setRawData(Zend_Json::encode($data));
+        $result = Zend_Json::decode($http->request(Zend_Http_Client::PUT)->getBody());
+        if (isset($result->ok, $result->rev)) {
              return $result->rev;
         }
     }
 
+    /**
+     * Retrieve 10 unprocessed records
+     *
+     * @return array
+     */
     public static function getToBeParsed()
     {
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/unprocessed?limit=10');
-        $data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
         return $data->rows;
     }
 
-    public static function generateId($url)
-    {
-        $url = str_replace(array('.', ':'), '_', $url);
-        return preg_replace('~[^a-z0-9\-\_]~i', '', $url);
-    }
-
+    /**
+     * Create timestamp as a array
+     *
+     * @param int $timestamp
+     * @return array
+     */
     public static function getDateFormat($timestamp)
     {
         return array(
@@ -230,16 +245,21 @@ SPIDER;
             );
     }
 
+    /**
+     * Get statistics
+     *
+     * @return array
+     */
     public static function getStats()
     {
         $http = new Zend_Http_Client(self::DATABASE . '/_design/statistics/_view/nrprocessed?group=true');
-        $data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
         $processed = $data->rows;
 
         $time = time();
-        $query = 'startkey=' . json_encode(self::getDateFormat(strtotime('- 60 seconds', $time))) . '&endkey=' . json_encode(self::getDateFormat($time));
+        $query = 'startkey=' . Zend_Json::encode(self::getDateFormat(strtotime('- 60 seconds', $time))) . '&endkey=' . Zend_Json::encode(self::getDateFormat($time));
         $http = new Zend_Http_Client(self::DATABASE . '/_design/statistics/_view/bydate?' . $query);
-        $data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
         $itemsPerSecond = round(count($data->rows) / 60, 2);
 
         return array(
@@ -255,13 +275,5 @@ SPIDER;
          * Sites found / second
          * Sites processed / second
          */
-
     }
 }
-
-
-//SitesBase::deleteAll();
-//$http = new Zend_Http_Client('http://localhost:5984/_stats');
-//$data = json_decode($http->request(Zend_Http_Client::GET)->getBody());
-//var_dump($data);
-var_dump(SitesBase::getStats());

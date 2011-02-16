@@ -13,7 +13,10 @@ Todo
 	[ ] Make it extremly fast! Use message queue's, caching and no overhead
 	[X] Use a noSQL Database
 	[X] Use Zend_Http_Client for parsing
-	[ ] Optimize noSQL usage
+	[X] Optimize noSQL usage
 	[ ] Create couchDb views for reports
 	[X] Add adddate
-	[ ] Migrate to ZF
+	[ ] Use ZF components
+	[ ] Automatic compact/clean CouchDB
+	[ ] Setup SOLR to search the sites
+	[ ] Fix memory leak when running for more than 2 hours
