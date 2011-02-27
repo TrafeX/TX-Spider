@@ -82,12 +82,12 @@ SPIDER;
         $http = new Zend_Http_Client(self::DATABASE . '/');
         $http->setRawData($stats);
         $http->setEncType('application/json');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody(), Zend_Json::TYPE_OBJECT);
 
         $http = new Zend_Http_Client(self::DATABASE . '/');
         $http->setRawData($spider);
         $http->setEncType('application/json');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody(), Zend_Json::TYPE_OBJECT);
 
         return true;
 
@@ -101,12 +101,12 @@ SPIDER;
     public static function deleteAll()
     {
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/byurl');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody(), Zend_Json::TYPE_OBJECT);
         if (isset($data->rows)) {
             foreach($data->rows as $row) {
                 $rowInfo = $row->value;
                 $http = new Zend_Http_Client(self::DATABASE . '/' . $row->id . '?rev=' . $rowInfo->_rev);
-                $resp = Zend_Json::decode($http->request(Zend_Http_Client::DELETE)->getBody());
+                $resp = Zend_Json::decode($http->request(Zend_Http_Client::DELETE)->getBody(), Zend_Json::TYPE_OBJECT);
             }
             echo 'Deleted ' . $data->total_rows . ' rows' . PHP_EOL;
         }
@@ -124,7 +124,7 @@ SPIDER;
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/byurl?limit=1');
         $http->setRawData(Zend_Json::encode($data));
         $http->setEncType('application/json');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody(), Zend_Json::TYPE_OBJECT);
         $data = new ArrayObject($data->rows);
 
         if ($data->count() > 0) {
@@ -171,7 +171,7 @@ SPIDER;
         $http = new Zend_Http_Client(self::DATABASE . '/');
         $http->setRawData(Zend_Json::encode($data));
         $http->setEncType('application/json');
-        $result = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody());
+        $result = Zend_Json::decode($http->request(Zend_Http_Client::POST)->getBody(), Zend_Json::TYPE_OBJECT);
         if (isset($result->ok, $result->id)) {
              return $result->id;
         }
@@ -189,7 +189,7 @@ SPIDER;
     public static function addMetadata($id, $httpCode, $parseTime, $nrlinks)
     {
         $http = new Zend_Http_Client(self::DATABASE . '/' . $id);
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody(), Zend_Json::TYPE_OBJECT);
 
         $nrfound = 0;
         if (isset($data->nrfound) && $data->nrfound > 0) {
@@ -209,7 +209,7 @@ SPIDER;
             );
         $http = new Zend_Http_Client(self::DATABASE . '/' . $id);
         $http->setRawData(Zend_Json::encode($data));
-        $result = Zend_Json::decode($http->request(Zend_Http_Client::PUT)->getBody());
+        $result = Zend_Json::decode($http->request(Zend_Http_Client::PUT)->getBody(), Zend_Json::TYPE_OBJECT);
         if (isset($result->ok, $result->rev)) {
              return $result->rev;
         }
@@ -223,7 +223,8 @@ SPIDER;
     public static function getToBeParsed()
     {
         $http = new Zend_Http_Client(self::DATABASE . '/_design/spider/_view/unprocessed?limit=10');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody(), Zend_Json::TYPE_OBJECT);
+
         return $data->rows;
     }
 
@@ -253,13 +254,13 @@ SPIDER;
     public static function getStats()
     {
         $http = new Zend_Http_Client(self::DATABASE . '/_design/statistics/_view/nrprocessed?group=true');
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody(), Zend_Json::TYPE_OBJECT);
         $processed = $data->rows;
 
         $time = time();
         $query = 'startkey=' . Zend_Json::encode(self::getDateFormat(strtotime('- 60 seconds', $time))) . '&endkey=' . Zend_Json::encode(self::getDateFormat($time));
         $http = new Zend_Http_Client(self::DATABASE . '/_design/statistics/_view/bydate?' . $query);
-        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody());
+        $data = Zend_Json::decode($http->request(Zend_Http_Client::GET)->getBody(), Zend_Json::TYPE_OBJECT);
         $itemsPerSecond = round(count($data->rows) / 60, 2);
 
         return array(
@@ -274,6 +275,7 @@ SPIDER;
          * Total nr sites to be processed
          * Sites found / second
          * Sites processed / second
+	 * Views: ordered by nrfound
          */
     }
 }
