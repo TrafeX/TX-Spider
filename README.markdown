@@ -16,7 +16,7 @@ Todo
 	[X] Optimize noSQL usage
 	[ ] Create couchDb views for reports
 	[X] Add adddate
-	[ ] Use ZF components
+	[X] Use ZF components
 	[ ] Automatic compact/clean CouchDB
 	[ ] Setup SOLR to search the sites
 	[ ] Fix memory leak when running for more than 2 hours

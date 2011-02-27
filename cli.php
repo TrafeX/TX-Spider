@@ -11,7 +11,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Europe/Amsterdam');
-set_include_path('.:src/');
+set_include_path('.:application/:library/');
 require_once 'Bootstrap.php';
 
 // Prepare for command line parsing
@@ -20,7 +20,7 @@ try {
         'help' => 'Displays usage information',
     	'run' => 'Start the spider',
         'statistics' => 'Return statistics',
-        'debug' => 'Enable the XHProf profiler',
+        'profile' => 'Enable the XHProf profiler',
         'verbose' => 'Enable verbose ouput'
     ));
     $console->parse();
@@ -32,7 +32,7 @@ try {
 if (isset($console->help) || count($console->toArray()) == 0) {
     failure($console->getUsageMessage());
 }
-if (isset($console->debug)) {
+if (isset($console->profile)) {
     // start profiling
     include_once '/var/www/xhprof_lib/utils/xhprof_lib.php';
     include_once '/var/www/xhprof_lib/utils/xhprof_runs.php';
@@ -57,7 +57,7 @@ if (isset($console->run)) {
         failure($e->getMessage());
     }
 }
-if (isset($console->debug)) {
+if (isset($console->profile)) {
     // end profiling
     $profiler_namespace = 'tx-spider';  // namespace for your application
     $xhprof_data = xhprof_disable();
