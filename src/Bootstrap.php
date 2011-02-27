@@ -12,8 +12,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Europe/Amsterdam');
 
-require_once 'src/Spider.php';
-require_once 'src/CoucheDb.php';
+require_once 'Spider.php';
+require_once 'CoucheDb.php';
 
 /**
  * Convenience function for exiting on failure

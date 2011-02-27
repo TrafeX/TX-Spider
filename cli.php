@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Europe/Amsterdam');
 set_include_path('.:src/');
-require_once 'src/Bootstrap.php';
+require_once 'Bootstrap.php';
 
 // Prepare for command line parsing
 try {
