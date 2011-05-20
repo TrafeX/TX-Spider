@@ -20,7 +20,7 @@ class SitesBase
      *
      * @var string
      */
-    const DATABASE = 'http://localhost:5984/spiderdb';
+    const DATABASE = 'http://debian-srv01.local:5984/spiderdb';
 
     /**#@+
      * Fields in the couchDB
@@ -77,7 +77,16 @@ STATISTICS;
    }
 }
 SPIDER;
-
+/*
+ *
+{
+  "_id" : "_design/test",
+  "lists": {
+    "bar": "function(head, req) { var row; while (row = getRow()) { send(row.value); } }"
+  }
+}
+ *
+ */
         // @todo: Batch?
         $http = new Zend_Http_Client(self::DATABASE . '/');
         $http->setRawData($stats);

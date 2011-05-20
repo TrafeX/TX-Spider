@@ -2,8 +2,8 @@
 /**
  * TrafexCrawler
  *
- * @category   Spider
- * @package    Src
+ * @category   Crawler
+ * @package    Application
  * @copyright  Copyright (c) 2011 Tim de Pater <code@trafex.nl>
  * @license    GPLv3 License http://www.gnu.org/licenses/gpl.txt
  * @version    $Id:$
@@ -13,7 +13,7 @@
  * The spider that crawls the websites
  *
  */
-class SiteSpider
+class Crawler extends ZendX_Console_Process_Unix
 {
     /**
      * Debug mode
@@ -36,6 +36,7 @@ class SiteSpider
      */
     public function __construct()
     {
+        parent::__construct();
     }
 
     /**
@@ -63,7 +64,7 @@ class SiteSpider
      *
      * @return void
      */
-    public function run()
+    protected function _run()
     {
         $urls = SitesBase::getToBeParsed();
         if (count($urls) == 0) {
@@ -178,13 +179,5 @@ class SiteSpider
         echo $logLine;
         // @todo: Implement logging
         return true;
-        /*
-		$filename = self::LOGPATH . "logger_" . date("Y-m-d") . ".log";
-		if($filehandler = fopen($filename, 'a'))
-		{
-			fwrite($filehandler, $logLine);
-			fclose($filehandler);
-		}
-		*/
     }
 }

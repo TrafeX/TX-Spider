@@ -2,7 +2,7 @@
 /**
  * TrafexCrawler
  *
- * @category   Spider
+ * @category   Crawler
  * @package    Cli
  * @copyright  Copyright (c) 2011 Tim de Pater <code@trafex.nl>
  * @license    GPLv3 License http://www.gnu.org/licenses/gpl.txt
@@ -18,7 +18,9 @@ require_once 'Bootstrap.php';
 try {
     $console = new Zend_Console_Getopt(array(
         'help' => 'Displays usage information',
-    	'run' => 'Start the spider',
+    	'start' => 'Start the crawler',
+    	'stop' => 'Stop the crawler',
+    	'status' => 'Check if crawler is running',
         'statistics' => 'Return statistics',
         'profile' => 'Enable the XHProf profiler',
         'verbose' => 'Enable verbose ouput'
@@ -28,42 +30,52 @@ try {
     failure($exception->getMessage());
 }
 
-// Display help information?
+
+// Display help information
 if (isset($console->help) || count($console->toArray()) == 0) {
     failure($console->getUsageMessage());
 }
 if (isset($console->profile)) {
-    // start profiling
-    include_once '/var/www/xhprof_lib/utils/xhprof_lib.php';
-    include_once '/var/www/xhprof_lib/utils/xhprof_runs.php';
-    xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY + XHPROF_FLAGS_NO_BUILTINS);
+    App_Profiler::start();
 }
 if (isset($console->statistics)) {
     var_dump(SitesBase::getStats());
     exit;
 }
-if (isset($console->run)) {
-    // Run spider
-    try {
-        $spider = new SiteSpider();
+
+$crawler = new Crawler();
+
+if (isset($console->start)) {
+    //try {
         if (isset($console->debug)) {
-            $spider->setDebug();
+            $crawler->setDebug();
         }
         if (isset($console->verbose)) {
-            $spider->setVerbose();
+            $crawler->setVerbose();
         }
-        $spider->run();
-    } catch (Exception $e) {
+        $crawler->start();
+        $console->status = true;
+    /*} catch (Exception $e) {
         failure($e->getMessage());
+    }*/
+}
+
+if (isset($console->stop)) {
+    $crawler->stop();
+    $console->status = true;
+}
+
+if (isset($console->status)) {
+    if ($crawler->isRunning()) {
+        echo 'Crawler is running, pid: ' . $crawler->getPid() . PHP_EOL;
+        while ($crawler->isRunning()) {
+            // This process must be running
+            sleep(1);
+        }
+    } else {
+        echo 'Crawler is stopped' . PHP_EOL;
     }
 }
 if (isset($console->profile)) {
-    // end profiling
-    $profiler_namespace = 'tx-spider';  // namespace for your application
-    $xhprof_data = xhprof_disable();
-    $xhprof_runs = new XHProfRuns_Default();
-    $run_id = $xhprof_runs->save_run($xhprof_data, $profiler_namespace);
-    echo PHP_EOL;
-    printf('http://localhost/xhprof_html/index.php?run=%s&source=%s', $run_id, $profiler_namespace);
-    echo PHP_EOL;
+    App_Profiler::end();
 }

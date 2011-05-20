@@ -2,8 +2,8 @@
 /**
  * TX-Spider
  *
- * @category   Spider
- * @package    Boostrap
+ * @category   Crawler
+ * @package    Application
  * @copyright  Copyright (c) 2011 Tim de Pater
  * @license    http://www.gnu.org/licenses/gpl.txt GPLv3 License
  * @version    $Id:$
@@ -11,9 +11,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Europe/Amsterdam');
-
-require_once 'Spider.php';
-require_once 'CoucheDb.php';
 
 /**
  * Convenience function for exiting on failure
@@ -33,3 +30,6 @@ function zendFrameworkAutoload($class)
     require_once str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
 }
 spl_autoload_register('zendFrameworkAutoload');
+
+require_once 'Spider.php';
+require_once 'CoucheDb.php';
